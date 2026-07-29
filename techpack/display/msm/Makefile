@@ -130,4 +130,9 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 
 obj-$(CONFIG_DRM_MSM)	+= msm_drm.o
 
-obj-$(CONFIG_DRM_FBDEV_EMULATION) += msm_fbdev.o
+# Was obj-$(CONFIG_DRM_FBDEV_EMULATION), which builds msm_fbdev as its own
+# module and leaves msm_fbdev_init/msm_fbdev_free undefined in msm_drm.ko.
+# msm_drv.c calls both, so the link fails as soon as fbdev emulation is
+# enabled. Every other optional part of this driver uses the msm_drm- form
+# to link into the composite module; this line was simply missed.
+msm_drm-$(CONFIG_DRM_FBDEV_EMULATION) += msm_fbdev.o
