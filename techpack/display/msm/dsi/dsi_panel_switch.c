@@ -744,7 +744,25 @@ static ssize_t te2_table_store(struct device *dev,
 		panel->te2_config.te2_edge[i].falling = table[i * 2 + 1];
 	}
 
-	if (!is_standby_mode(bd->props.state)) {
+	/*
+	 * Only push the table to the panel if the DSI host is already up.
+	 *
+	 * This node is world-writable to the "system" user (init.sm7250.rc),
+	 * and the vendor sensor sub-HAL (sensors.ssc.so, via a POSIX timer
+	 * thread of android.hardware.sensors@2.0-service.multihal) writes it
+	 * at an arbitrary point during boot. If that write lands inside the
+	 * continuous-splash window -- after the bootloader hands over a
+	 * running panel, but before the DRM enable path initialises the DSI
+	 * host -- the transfer goes out on an uninitialised link, fails with
+	 * -EINVAL, wedges the controller and the panel never comes up.
+	 *
+	 * Deferring costs nothing: the new values are stored above, and
+	 * s6e3hc2_te2_normal_mode_update() pushes them on the next mode set.
+	 * This is the same treatment standby mode already gets.
+	 */
+	if (!dsi_panel_initialized(panel)) {
+		pr_info("te2_table: panel not initialized, deferring register update\n");
+	} else if (!is_standby_mode(bd->props.state)) {
 		pr_debug("te2_config.current_type =%d\n",
 			 panel->te2_config.current_type);
 		s6e3hc2_te2_update_reg_locked(panel);
