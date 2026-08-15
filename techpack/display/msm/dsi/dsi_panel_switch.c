@@ -744,7 +744,17 @@ static ssize_t te2_table_store(struct device *dev,
 		panel->te2_config.te2_edge[i].falling = table[i * 2 + 1];
 	}
 
-	if (!is_standby_mode(bd->props.state)) {
+	/*
+	 * Writing to the panel before the DSI host is up causes the transfer
+	 * to fail and the screen stays black. In stock Android the DSI host is
+	 * initialised early, so this is not a problem. In UT, the DSI is initialized
+	 * later, causing this problem. Guard it the same way
+	 * dsi_backlight.c does. The values are stored above and go out on the
+	 * next mode set.
+	 */
+	if (!dsi_panel_initialized(panel)) {
+		pr_info("te2_table: panel not initialized, deferring register update\n");
+	} else if (!is_standby_mode(bd->props.state)) {
 		pr_debug("te2_config.current_type =%d\n",
 			 panel->te2_config.current_type);
 		s6e3hc2_te2_update_reg_locked(panel);
