@@ -1228,9 +1228,13 @@ static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		if (!lock_fb_info(info))
 			return -ENODEV;
 		fb = info->fbops;
+#if defined(CONFIG_FB_MSM)
 		if (fb->fb_ioctl_v2)
 			ret = fb->fb_ioctl_v2(info, cmd, arg, file);
 		else if (fb->fb_ioctl)
+#else
+		if (fb->fb_ioctl)
+#endif
 			ret = fb->fb_ioctl(info, cmd, arg);
 		else
 			ret = -ENOTTY;
@@ -1387,9 +1391,13 @@ static long fb_compat_ioctl(struct file *file, unsigned int cmd,
 		break;
 
 	default:
+#if defined(CONFIG_FB_MSM)
 		if (fb->fb_compat_ioctl_v2)
 			ret = fb->fb_compat_ioctl_v2(info, cmd, arg, file);
 		else if (fb->fb_compat_ioctl)
+#else
+		if (fb->fb_compat_ioctl)
+#endif
 			ret = fb->fb_compat_ioctl(info, cmd, arg);
 		break;
 	}
