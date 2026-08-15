@@ -6,4 +6,14 @@
 	model = "Qualcomm Technologies, Inc. Lito SoC";
 	compatible = "qcom,lito";
 	qcom,board-id = <0 0>;
+
+	/* Console on the framebuffer the bootloader already painted. */
+	framebuffer@a0000000 {
+		compatible = "simple-framebuffer";
+		reg = <0x0 0xA0000000 0x0 0x009A4000>;
+		width = <1080>;
+		height = <2340>;
+		stride = <4320>;
+		format = "x8r8g8b8";
+	};
 };
