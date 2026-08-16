@@ -3343,19 +3343,22 @@ static void binder_transaction(struct binder_proc *proc,
 		security_cred_getsecid(proc->cred, &secid);
 		ret = security_secid_to_secctx(secid, &secctx, &secctx_sz);
 		if (ret) {
-			return_error = BR_FAILED_REPLY;
-			return_error_param = ret;
-			return_error_line = __LINE__;
-			goto err_get_secctx_failed;
-		}
-		added_size = ALIGN(secctx_sz, sizeof(u64));
-		extra_buffers_size += added_size;
-		if (extra_buffers_size < added_size) {
-			/* integer overflow of extra_buffers_size */
-			return_error = BR_FAILED_REPLY;
-			return_error_param = EINVAL;
-			return_error_line = __LINE__;
-			goto err_bad_extra_size;
+			/* Android 11 and later ask for a security context on
+			 * every transaction. AppArmor has none to give, so
+			 * deliver the transaction without one instead of
+			 * failing it.
+			 */
+			secctx = NULL;
+		} else {
+			added_size = ALIGN(secctx_sz, sizeof(u64));
+			extra_buffers_size += added_size;
+			if (extra_buffers_size < added_size) {
+				/* integer overflow of extra_buffers_size */
+				return_error = BR_FAILED_REPLY;
+				return_error_param = EINVAL;
+				return_error_line = __LINE__;
+				goto err_bad_extra_size;
+			}
 		}
 	}
 
@@ -3715,7 +3718,6 @@ err_binder_alloc_buf_failed:
 err_bad_extra_size:
 	if (secctx)
 		security_release_secctx(secctx, secctx_sz);
-err_get_secctx_failed:
 	kfree(tcomplete);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
 err_alloc_tcomplete_failed:
