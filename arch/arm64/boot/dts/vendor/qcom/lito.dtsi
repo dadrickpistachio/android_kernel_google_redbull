@@ -480,7 +480,6 @@
 		cont_splash_memory: cont_splash_region {
 			reg = <0x0 0xA0000000 0x0 0x02300000>;
 			label = "cont_splash_region";
-			no-map;
 		};
 
 		dfps_data_memory: dfps_data_region@a2300000 {
@@ -491,7 +490,6 @@
 		disp_rdump_memory: disp_rdump_region@0xa0000000 {
 			reg = <0x0 0xA0000000 0x0 0x02300000>;
 			label = "disp_rdump_region";
-			no-map;
 		};
 
 		dump_mem: mem_dump_region {
